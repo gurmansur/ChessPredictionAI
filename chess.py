@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import sklearn
@@ -16,31 +17,59 @@ df_Chess = pd.read_csv('data_chess.csv', sep = ",")
 df_Chess = df_Chess[['winner', 'moves']]
 df_Chess = df_Chess.dropna()
 
-# Transform moves to one-hot encoding
-df_Chess = pd.get_dummies(df_Chess, columns=['moves'])
+# Transform winner to 0, 1 or 2
+df_Chess['winner'] = df_Chess['winner'].map({'white': 0, 'black': 1, 'draw': 2})
 
-# Transform winner to 0 or 1
-df_Chess['winner'] = df_Chess['winner'].apply(lambda x: 1 if x == 'white' else 0)
+# Transform moves to numbers
+df_Chess['moves'] = df_Chess['moves'].apply(lambda x: x.replace('a', '1'))
+df_Chess['moves'] = df_Chess['moves'].apply(lambda x: x.replace('b', '2'))
+df_Chess['moves'] = df_Chess['moves'].apply(lambda x: x.replace('c', '3'))
+df_Chess['moves'] = df_Chess['moves'].apply(lambda x: x.replace('d', '4'))
+df_Chess['moves'] = df_Chess['moves'].apply(lambda x: x.replace('e', '5'))
+df_Chess['moves'] = df_Chess['moves'].apply(lambda x: x.replace('f', '6'))
+df_Chess['moves'] = df_Chess['moves'].apply(lambda x: x.replace('g', '7'))
+df_Chess['moves'] = df_Chess['moves'].apply(lambda x: x.replace('h', '8'))
+df_Chess['moves'] = df_Chess['moves'].apply(lambda x: x.replace('x', '9'))
+df_Chess['moves'] = df_Chess['moves'].apply(lambda x: x.replace('=', '10'))
+df_Chess['moves'] = df_Chess['moves'].apply(lambda x: x.replace('+', '11'))
+df_Chess['moves'] = df_Chess['moves'].apply(lambda x: x.replace('#', '12'))
+df_Chess['moves'] = df_Chess['moves'].apply(lambda x: x.replace('O-O-O', '14'))
+df_Chess['moves'] = df_Chess['moves'].apply(lambda x: x.replace('O-O', '13'))
+df_Chess['moves'] = df_Chess['moves'].apply(lambda x: x.replace('Q', '15'))
+df_Chess['moves'] = df_Chess['moves'].apply(lambda x: x.replace('R', '16'))
+df_Chess['moves'] = df_Chess['moves'].apply(lambda x: x.replace('N', '17'))
+df_Chess['moves'] = df_Chess['moves'].apply(lambda x: x.replace('B', '18'))
+df_Chess['moves'] = df_Chess['moves'].apply(lambda x: x.replace('K', '19'))
+df_Chess['moves'] = df_Chess['moves'].apply(lambda x: x.replace('P', '20'))
 
-# Shuffle data
-df_Chess = shuffle(df_Chess)
+# Transform moves to array
+df_Chess['moves'] = df_Chess['moves'].apply(lambda x: x.split(' '))
 
-# Split data
-X = df_Chess.drop(['winner'], axis=1)
-y = df_Chess['winner']
+# Get 40% of moves
+df_Chess['moves'] = df_Chess['moves'].apply(lambda x: x[:int(len(x)*0.4)])
 
-# Split data into train and test
-X_train, X_test, y_train, y_test = sklearn.model_selection.train_test_split(X, y, test_size=0.2)
+# Set lenght of all moves array to same value
+df_Chess['moves'] = df_Chess['moves'].apply(lambda x: x + ['0']*(max([len(i) for i in df_Chess['moves']]) - len(x)))
 
-# Scale data
-scaler = MinMaxScaler()
-X_train = scaler.fit_transform(X_train)
-X_test = scaler.transform(X_test)
+# Split train and test using 20% of data for testing
+from sklearn.model_selection import train_test_split
 
-# Train SGDClassifier
-from sklearn.linear_model import SGDClassifier
-model = SGDClassifier(max_iter=1000, tol=1e-3, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(df_Chess['moves'], df_Chess['winner'], test_size=0.2)
+
+X_train = np.array(X_train.tolist())
+X_test = np.array(X_test.tolist())
+
+# Train SVC model
+import sklearn.svm as svm
+
+model = svm.SVC(kernel='linear', C=1, gamma=1)
 model.fit(X_train, y_train)
 
-# Evaluate model
-print(model.score(X_test, y_test))
+# Predict
+y_pred = model.predict(X_test)
+
+# Evaluate
+from sklearn.metrics import classification_report, confusion_matrix
+
+print(confusion_matrix(y_test, y_pred))
+print(classification_report(y_test, y_pred))
