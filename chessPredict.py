@@ -9,9 +9,6 @@ from google_drive_downloader import GoogleDriveDownloader as gdd
 import chess
 
 # Load data
-gdd.download_file_from_google_drive(file_id='1koNGmnBxvSzFM0dKDwgxzijjG2pFPKs5',
-                                    dest_path='./data_chess.csv'
-                                    )
 df_Chess = pd.read_csv('data_chess.csv', sep = ",")
 
 # Drop columns
@@ -59,7 +56,6 @@ except:
       if (j % 7 == 0 and j != 0) or j == len(train['moves'][i])-1:
         boardString = str(board).replace('\n', ' ')
         df_Chessboards_train = df_Chessboards_train._append({'winner': train['winner'][i], 'board': boardString}, ignore_index=True)
-    print(i)
     board.reset()
 
   #fill test dataframe with string representations of the chessboards
@@ -68,7 +64,6 @@ except:
       board.push_san(test['moves'][i][j])
     boardString = str(board).replace('\n', ' ')
     df_Chessboards_test = df_Chessboards_test._append({'winner': test['winner'][i], 'board': boardString}, ignore_index=True)
-    print(i)
     board.reset()
 
   #make column in df_Chessboards for each element in board
@@ -106,6 +101,9 @@ df_Chessboards_test = df_Chessboards_test_encoded
 print(df_Chessboards_train)
 print(df_Chessboards_test)
 
+#shuffle df_Chessboards
+df_Chessboards_train = shuffle(df_Chessboards_train)
+
 #split df_Chessboards into x and y
 x_train = df_Chessboards_train.drop(columns=['winner'])
 y_train = df_Chessboards_train['winner']
@@ -120,9 +118,8 @@ try:
 except:
   #train mlp model
   from sklearn.neural_network import MLPClassifier
-  mlp = MLPClassifier(hidden_layer_sizes=(100,), max_iter=1000, alpha=0.0001, solver='adam', verbose=True, random_state=21, n_iter_no_change=25, tol=0.0001)
+  mlp = MLPClassifier(hidden_layer_sizes=(10,), max_iter=100, alpha=0.0001, solver='adam', random_state=17, verbose=True, n_iter_no_change=2, tol=0.001)
   mlp.fit(x_train, y_train)
-  #save model using joblib
   dump(mlp, 'mlp.joblib')
 
 #predict
@@ -132,8 +129,3 @@ predictions = mlp.predict(x_test)
 from sklearn.metrics import classification_report, confusion_matrix
 print(confusion_matrix(y_test,predictions))
 print(classification_report(y_test,predictions))
-
-
-
-
-
