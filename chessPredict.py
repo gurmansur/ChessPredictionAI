@@ -153,12 +153,12 @@ try:
 except:
   #train mlp model
   from sklearn.neural_network import MLPClassifier
-  mlp = MLPClassifier(hidden_layer_sizes=(10,), max_iter=100, alpha=0.0001, solver='adam', random_state=17, verbose=True, n_iter_no_change=2, tol=0.001)
+  mlp = MLPClassifier(hidden_layer_sizes=(10), max_iter=100, alpha=0.0001, solver='adam', verbose=True, n_iter_no_change=2, tol=0.001)
   mlp.fit(x_train, y_train)
   dump(mlp, 'mlp.joblib')
 
 #predict
-predictions = mlp.predict(x_test.values.tolist())
+predictions = mlp.predict(x_test)
 
 #evaluate
 from sklearn.metrics import classification_report, confusion_matrix
